@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Consórcio</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-top: 20px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .input-panel {
+            width: 30%;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-panel label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .input-panel input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .input-panel button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .schedule-table {
+            width: 68%;
+        }
+
+        #scheduleTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Hide overflow for rounded corners */
+        }
+
+        #scheduleTable th, #scheduleTable td {
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: center;
+        }
+
+        #scheduleTable th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        #scheduleTable tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .input-panel {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+
+            .schedule-table {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Simulador de Consórcio</h1>
+
+    <div class="container">
+        <div class="input-panel">
+            <label for="credito">Valor do Crédito (R$):</label>
+            <input type="number" id="credito" value="1000000">
+
+            <label for="meses">Prazo (meses):</label>
+            <input type="number" id="meses" value="240">
+
+            <label for="taxa_admin">Taxa Administrativa (%):</label>
+            <input type="number" id="taxa_admin" value="26">
+
+            <label for="taxa_reserva">Taxa de Reserva (%):</label>
+            <input type="number" id="taxa_reserva" value="0.5">
+
+            <label for="taxa_reajuste">Taxa de Reajuste (%):</label>
+            <input type="number" id="taxa_reajuste" value="2">
+
+            <label for="pct_lance">Percentual do Lance (%):</label>
+            <input type="number" id="pct_lance" value="30">
+
+            <label for="mes_lance">Mês de Contemplação:</label>
+            <input type="number" id="mes_lance" value="60">
+
+            <button onclick="simular()">Simular</button>
+        </div>
+
+        <div class="schedule-table">
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>Mês</th>
+                        <th>Restante</th>
+                        <th>Data</th>
+                        <th>Pagamento</th>
+                        <th>Lance</th>
+                        <th>Saldo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function simular() {
+            const credito = parseFloat(document.getElementById("credito").value);
+            const meses = parseInt(document.getElementById("meses").value);
+            const taxa_admin = parseFloat(document.getElementById("taxa_admin").value) / 100;
+            const taxa_reserva = parseFloat(document.getElementById("taxa_reserva").value) / 100;
+            const taxa_reajuste = parseFloat(document.getElementById("taxa_reajuste").value) / 100;
+            const pct_lance = parseFloat(document.getElementById("pct_lance").value) / 100;
+            const mes_lance = parseInt(document.getElementById("mes_lance").value);
+
+            const custo_total = credito * (1 + taxa_admin + taxa_reserva);
+            const pagamento_mensal_inicial = custo_total / meses;
+
+            let saldo_restante = custo_total;
+            let pagamento_mensal = pagamento_mensal_inicial;
+            let contador_pagamentos = 0;
+            let data_atual = new Date();
+            let cronograma = [];
+
+            for (let mes = 1; mes <= meses; mes++) {
+                let saldo_atual = saldo_restante;
+                let pagamento = pagamento_mensal;
+
+                if (mes === meses) {
+                    pagamento = saldo_atual;
+                }
+
+                let valor_lance = 0;
+                let descricao_lance = "";
+                if (mes === mes_lance) {
+                    valor_lance = custo_total * pct_lance;
+                    descricao_lance = `R$${valor_lance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                }
+
+                saldo_restante -= pagamento;
+                contador_pagamentos++;
+
+                if (mes === mes_lance) {
+                    saldo_restante -= valor_lance;
+                    let meses_restantes = meses - mes;
+                    pagamento_mensal = saldo_restante / meses_restantes;
+                }
+
+                if (contador_pagamentos === 6) {
+                    let meses_restantes = meses - mes;
+                    let saldo_ajustado, novo_pagamento_mensal;
+                    if (meses_restantes <= 0) {
+                        saldo_ajustado = saldo_restante;
+                        novo_pagamento_mensal = saldo_restante;
+                    } else {
+                        saldo_ajustado = saldo_restante * (1 + taxa_reajuste);
+                        novo_pagamento_mensal = saldo_ajustado / meses_restantes;
+                    }
+                    saldo_restante = saldo_ajustado;
+                    pagamento_mensal = novo_pagamento_mensal;
+                    contador_pagamentos = 0;
+                }
+
+                cronograma.push({
+                    Mês: mes,
+                    Restante: meses - mes,
+                    Data: (function() {
+                        let data_pagamento = new Date(data_atual.getFullYear(), data_atual.getMonth() + (mes - 1), 15);
+                        return data_pagamento.toLocaleDateString('pt-BR');
+                    })(),
+                    Pagamento: `R$${pagamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    Lance: descricao_lance,
+                    Saldo: `R$${saldo_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                });
+            }
+
+            exibirCronograma(cronograma);
+        }
+
+        function exibirCronograma(cronograma) {
+            const corpoTabela = document.querySelector("#scheduleTable tbody");
+            corpoTabela.innerHTML = ""; // Limpar resultados anteriores
+
+            cronograma.forEach(item => {
+                let linha = corpoTabela.insertRow();
+                let celulaMes = linha.insertCell();
+                let celulaRestante = linha.insertCell();
+                let celulaData = linha.insertCell();
+                let celulaPagamento = linha.insertCell();
+                let celulaLance = linha.insertCell();
+                let celulaSaldo = linha.insertCell();
+
+                celulaMes.innerText = item.Mês;
+                celulaRestante.innerText = item.Restante;
+                celulaData.innerText = item.Data;
+                celulaPagamento.innerText = item.Pagamento;
+                celulaLance.innerText = item.Lance;
+                celulaSaldo.innerText = item.Saldo;
+            });
+        }
+    </script>
+</body>
+</html>

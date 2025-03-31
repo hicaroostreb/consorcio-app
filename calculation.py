@@ -119,13 +119,14 @@ class ConsortiumSimulator:
                 payments_count = 0  # Reiniciar contador de pagamentos
 
             # Adicionar registro ao cronograma
+            payment_date = datetime(
+                current_date.year, current_date.month, 15
+            ) + timedelta(days=30 * (month - 1))
             schedule.append(
                 {
                     "Month": month,
                     "Remaining": self.months - month,
-                    "Date": (current_date + timedelta(days=30 * (month - 1))).strftime(
-                        "%Y-%m-%d"
-                    ),
+                    "Date": payment_date.strftime("%Y-%m-%d"),
                     "Payment": f"R${payment:,.2f}",
                     "Bid": bid_value,
                     "Balance": f"R${current_balance:,.2f}",
@@ -145,8 +146,8 @@ def print_schedule(df, title):
     """
     print(f"\n{title}:")
     if len(df) > 20:
-        df_head = df.head(10)
-        df_tail = df.tail(10)
+        df_head = df.head(100)
+        df_tail = df.tail(100)
         df_subset = pd.concat([df_head, df_tail])
         print(tabulate(df_subset, headers="keys", tablefmt="pretty", showindex=False))
     else:
@@ -162,7 +163,7 @@ def main():
         reserve_fee=0.5,
         readjust_rate=2,
         bid_pct=30,
-        bid_month=9,
+        bid_month=60,
     )
 
     schedule = simulator.generate_schedule()
